@@ -1,6 +1,7 @@
 import os
 
 USE_AUTH = os.environ.get('USE_AUTH', 'TRUE') != 'FALSE'
+NO_AUTH_EMAIL = os.environ.get('NO_AUTH_EMAIL', 'example@example.com')
 JWT_SECRET = os.environ.get('JWT_SECRET', None)
 JWT_CLIENT_ID = os.environ.get('JWT_CLIENT_ID', None)
 ADMIN_CLIENT_ID = os.environ.get('ADMIN_CLIENT_ID', None)

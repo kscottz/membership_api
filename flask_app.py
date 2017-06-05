@@ -1,4 +1,5 @@
-from membership.web.members import app
+from config import dotenv
+from membership.web.base_app import app
 
 
 # For running as script

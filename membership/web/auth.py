@@ -1,14 +1,13 @@
 from config.auth_config import JWT_SECRET, JWT_CLIENT_ID, ADMIN_CLIENT_ID, ADMIN_CLIENT_SECRET, \
-    AUTH_CONNECTION, AUTH_URL
+    AUTH_CONNECTION, AUTH_URL, USE_AUTH, NO_AUTH_EMAIL
+from config.portal_config import PORTAL_URL
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import request, Response, jsonify
 import jwt
 import logging
-import membership
 from membership.database.base import Session
 from membership.database.models import Member
-from membership.util.email import send_emails
 import pkg_resources
 import random
 import requests
@@ -35,16 +34,19 @@ def requires_auth(admin=False):
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
-            auth = request.headers.get('authorization')
-            if not auth:
-                return deny()
-            token = auth.split()[1]
-            try:
-                token = jwt.decode(token, JWT_SECRET, audience=JWT_CLIENT_ID)
-            except Exception as e:
-                return deny()
-            email = token.get('email')
-            session = Session()
+            if USE_AUTH:
+                auth = request.headers.get('authorization')
+                if not auth:
+                    return deny()
+                token = auth.split()[1]
+                try:
+                    token = jwt.decode(token, JWT_SECRET, audience=JWT_CLIENT_ID)
+                except Exception as e:
+                    return deny()
+                email = token.get('email')
+                session = Session()
+            else:
+                email = NO_AUTH_EMAIL
             try:
                 member = session.query(Member).filter_by(email_address=email).one()
                 authenticated = False
@@ -52,7 +54,11 @@ def requires_auth(admin=False):
                     for role in member.roles:
                         if role.committee_id is None and role.role == 'admin':
                             authenticated = True
+                else:
+                    authenticated = True
                 if authenticated:
+                    kwargs['requester'] = member
+                    kwargs['session'] = session
                     return f(*args, **kwargs)
                 return deny()
             finally:
@@ -81,7 +87,9 @@ def generate_auth0_token():
             'expiry': datetime.now() + timedelta(seconds=response['expires_in'])}
 
 
-def create_auth0_user(email, name):
+def create_auth0_user(email):
+    if not USE_AUTH:
+        return PORTAL_URL
     # create the user
     payload = {
         'connection': AUTH_CONNECTION,
@@ -100,7 +108,7 @@ def create_auth0_user(email, name):
 
     # get a password change URL
     payload = {
-        'result_url': 'http:localhost:3000/',
+        'result_url': PORTAL_URL,
         'user_id': user_id
     }
     r = requests.post(AUTH_URL + 'api/v2/tickets/password-change', json=payload, headers=headers)
@@ -119,7 +127,5 @@ def create_auth0_user(email, name):
         logging.error(r.json())
         raise Exception('Failed to get verify url')
     validate_url = r.json()['ticket']
-    # now send email with this link
-    template = pkg_resources.resource_string(membership.__name__, 'templates/welcome_email.html')
-    recipient_variables = {email: {'name': name, 'link': validate_url}}
-    send_emails('Welcome %recipient.name%', template, recipient_variables)
+    return validate_url
+
