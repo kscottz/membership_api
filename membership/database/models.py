@@ -50,3 +50,45 @@ class Attendee(Base):
 
     id = Column(Integer, primary_key=True, unique=True)
     meeting_id = Column(ForeignKey('meetings.id'))
+
+
+class Election(Base):
+    __tablename__ = 'elections'
+
+    id = Column(Integer, primary_key=True, unique=True)
+    name = Column(String(45), nullable=False)
+    status = Column(String(45), nullable=False, default='draft')
+    number_winners = Column(Integer)
+
+
+class Candidate(Base):
+    __tablename__ = 'candidates'
+
+    id = Column(Integer, primary_key=True, unique=True)
+    member_id = Column(ForeignKey('members.id'))
+    election_id = Column(ForeignKey('elections.id'))
+
+    member = relationship(Member)
+    election = relationship(Election, backref='candidates')
+
+
+class Vote(Base):
+    __tablename__ = 'votes'
+
+    id = Column(Integer, primary_key=True, unique=True)
+    vote_key = Column(Integer)
+    election_id = Column(ForeignKey('elections.id'))
+
+    election = relationship(Election, backref='votes')
+
+
+class Ranking(Base):
+    __tablename__ = 'rankings'
+
+    id = Column(Integer, primary_key=True, unique=True)
+    vote_id = Column(ForeignKey('votes.id'))
+    rank = Column(Integer)
+    candidate_id = Column(ForeignKey('candidates.id'))
+
+    vote = relationship(Vote, backref=backref('ranking', order_by="Ranking.rank"))
+    candidate = relationship(Candidate)
