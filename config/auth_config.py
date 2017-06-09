@@ -3,7 +3,7 @@ import os
 USE_AUTH = os.environ.get('USE_AUTH', 'TRUE') != 'FALSE'
 
 # the user to authenticate as if external auth is off (for testing only)
-NO_AUTH_EMAIL = os.environ.get('NO_AUTH_EMAIL', 'example@example.com')
+NO_AUTH_EMAIL = os.environ.get('NO_AUTH_EMAIL', 'joe.schmoe@example.com')
 
 # the client id and secret for verifying users token
 JWT_SECRET = os.environ.get('JWT_SECRET', None)

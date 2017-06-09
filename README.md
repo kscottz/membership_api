@@ -50,9 +50,14 @@ which pip
 ```
 pip install -r requirements-dev.txt
 ```
-**7. Run the database migrations**
+**7. Create your `.env` config file for the project**
 ```
-alembic upgrade head
+cp example.env .env
+# edit .env and replace the email with your email address
+```
+**8. Run the database migrations**
+```
+PYTHONPATH=. alembic upgrade head
 ```
   a. (NOTE) If you don't have mysql installed run
   ```
@@ -65,7 +70,7 @@ alembic upgrade head
   c. (NOTE) If you see an error about a missing the `dsa` database, create it with
   ```
   mysql -u root -e "create database dsa"
-  ```
+ ```
 **8. Create your `.env` config file for the project**
 ```
 cp example.env .env
