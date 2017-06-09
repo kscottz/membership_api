@@ -44,9 +44,9 @@ def requires_auth(admin=False):
                 except Exception as e:
                     return deny()
                 email = token.get('email')
-                session = Session()
             else:
                 email = NO_AUTH_EMAIL
+            session = Session()
             try:
                 member = session.query(Member).filter_by(email_address=email).one()
                 authenticated = False
