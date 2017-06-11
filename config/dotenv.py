@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from os import path
 try:
     from dotenv import load_dotenv

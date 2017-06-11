@@ -1,11 +1,14 @@
 from __future__ import with_statement
-from config import dotenv
 from alembic import context
 from sqlalchemy import create_engine, pool
 from logging.config import fileConfig
-from membership.database import models
-from membership.database.base import metadata
-from config.database_config import DATABASE_URL
+
+# add the project path to allow imports from membership
+import inspect, os, sys
+from os.path import abspath, dirname
+project_dir = dirname(dirname(abspath(inspect.getfile(inspect.currentframe()))))
+print("Adding '{}' to PYTHONPATH".format(project_dir))
+sys.path.append(project_dir)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -18,6 +21,11 @@ fileConfig(config.config_file_name)
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
+from config import dotenv
+from config.database_config import DATABASE_URL
+from membership.database import models
+from membership.database.base import metadata
+
 # target_metadata = mymodel.Base.metadata
 target_metadata = metadata
 
