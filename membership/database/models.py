@@ -4,6 +4,7 @@ from membership.database.base import Base
 from sqlalchemy import Boolean, Column, Date, DateTime, Enum, ForeignKey, Integer, Float, Numeric, \
     String, Time
 from sqlalchemy.orm import backref, reconstructor, relationship
+from sqlalchemy.schema import UniqueConstraint
 
 
 class Member(Base):
@@ -13,6 +14,10 @@ class Member(Base):
     first_name = Column(String(45))
     last_name = Column(String(45))
     email_address = Column(String(254), unique=True)
+
+    @property
+    def name(self):
+        return ' '.join([self.first_name, self.last_name])
 
 
 class Committee(Base):
@@ -74,6 +79,7 @@ class Candidate(Base):
 
 class Vote(Base):
     __tablename__ = 'votes'
+    __table_args__ = (UniqueConstraint('vote_key', 'election_id'),)
 
     id = Column(Integer, primary_key=True, unique=True)
     vote_key = Column(Integer)
@@ -92,3 +98,15 @@ class Ranking(Base):
 
     vote = relationship(Vote, backref=backref('ranking', order_by="Ranking.rank"))
     candidate = relationship(Candidate)
+
+
+class EligibleVoter(Base):
+    __tablename__ = 'eligible_voters'
+
+    id = Column(Integer, primary_key=True, unique=True)
+    member_id = Column(ForeignKey('members.id'))
+    voted = Column(Boolean)
+    election_id = Column(ForeignKey('elections.id'))
+
+    member = relationship(Member, backref='eligible_votes')
+    election = relationship(Election, backref='voters')
