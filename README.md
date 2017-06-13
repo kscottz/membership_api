@@ -29,12 +29,12 @@ to use the site.
 3. **Create a virtual environment (venv) for this project** (read more about [python 3 venv](https://packaging.python.org/installing/#creating-virtual-environments))
     ```
     # from inside the repo
-    python3 -venv .
+    python3 -m venv .
     ```
     1. Set the version to python 3.6.1 in `pyvenv.cfg`
     2. Upgrade python in the venv
     ```
-    python3 -venv --upgrade .
+    python3 -m venv --upgrade .
     ```
 
 4. **Activate the venv**
@@ -78,18 +78,12 @@ to use the site.
         mysql -u root -e "create database dsa"
         ```
 
-9. **Create your `.env` config file for the project**
-    ```
-    cp example.env .env
-    # edit .env and replace the email with your email address
-    ```
-
-10. **Run the server**
+9. **Run the server**
     ```
     make run
     ```
 
-11. Verify that your API is up
+10. Verify that your API is up
     ```
     curl http://localhost:8080/health
     # Should see {"health": true}
