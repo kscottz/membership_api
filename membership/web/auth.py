@@ -37,7 +37,7 @@ def requires_auth(admin=False):
             if USE_AUTH:
                 auth = request.headers.get('authorization')
                 if not auth:
-                    return deny()
+                    return deny('Authorization not found.')
                 token = auth.split()[1]
                 try:
                     token = jwt.decode(token, JWT_SECRET, audience=JWT_CLIENT_ID)
