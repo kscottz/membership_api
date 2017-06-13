@@ -16,12 +16,12 @@ import string
 PASSWORD_CHARS = string.ascii_letters + string.digits
 
 
-def deny() -> Response:
+def deny(reason: str= '') -> Response:
     """Sends a 401 response that enables basic auth"""
     response = jsonify({
         'status': 'error',
         'err': 'Could not verify your access level for that URL.\n'
-               'You have to login with proper credentials'
+               'You have to login with proper credentials and' + reason
     })
     response.status_code = 401
     return response
@@ -42,7 +42,7 @@ def requires_auth(admin=False):
                 try:
                     token = jwt.decode(token, JWT_SECRET, audience=JWT_CLIENT_ID)
                 except Exception as e:
-                    return deny()
+                    return deny(str(e))
                 email = token.get('email')
             else:
                 email = NO_AUTH_EMAIL
@@ -60,7 +60,7 @@ def requires_auth(admin=False):
                     kwargs['requester'] = member
                     kwargs['session'] = session
                     return f(*args, **kwargs)
-                return deny()
+                return deny('not enough access')
             finally:
                 session.close()
 
