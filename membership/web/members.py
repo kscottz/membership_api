@@ -12,20 +12,50 @@ def get_members(requester: Member, session: Session):
     results = []
     members = session.query(Member).all()
     for member in members:
-        results.append({'name': member.first_name + ' ' + member.last_name,
-                       'email': member.email_address})
+        results.append({'id': member.id,
+                        'name': member.name,
+                        'email': member.email_address})
     return jsonify(results)
 
 
 @member_api.route('/member', methods=['GET'])
 @requires_auth(admin=False)
-def get_member_info(requester: Member, session: Session):
-    member = {'info': {'first_name': requester.first_name, 'last_name': requester.last_name},
-              'roles':
-                  [{'role': role.role, 'committee': role.committee.name
-                  if role.committee else 'general'} for role in requester.roles]
-              }
+def get_member(requester: Member, session: Session):
+    member = get_member_basics(requester)
     return jsonify(member)
+
+
+def get_member_basics(member):
+    return {'info': {'first_name': member.first_name, 'last_name': member.last_name},
+            'roles':
+                [{'role': role.role, 'committee': role.committee.name
+                    if role.committee else 'general'} for role in member.roles]
+             }
+
+
+def get_member_details_helper(member):
+    member_dict = get_member_basics(member)
+    member_dict['meetings'] = [attendee.meeting.name for attendee in member.meetings_attended]
+    member_dict['votes'] = [{'election_id': eligible_vote.election_id,
+                             'election_name': eligible_vote.election.name,
+                             'election_status': eligible_vote.election.status,
+                             'voted': eligible_vote.voted
+                             } for eligible_vote in member.eligible_votes]
+    return member_dict
+
+
+@member_api.route('/member/details', methods=['GET'])
+@requires_auth(admin=False)
+def get_member_details(requester: Member, session: Session):
+    member = get_member_details_helper(requester)
+    return jsonify(member)
+
+
+@member_api.route('/admin/member/details', methods=['GET'])
+@requires_auth(admin=True)
+def get_member_info(requester: Member, session: Session):
+    other_member = session.query(Member).get(request.args['member_id'])
+    return jsonify(get_member_details_helper(other_member))
 
 
 @member_api.route('/member', methods=['POST'])
