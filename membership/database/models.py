@@ -17,7 +17,12 @@ class Member(Base):
 
     @property
     def name(self):
-        return ' '.join([self.first_name, self.last_name])
+        n = ''
+        if self.first_name:
+            n = self.first_name
+        if self.last_name:
+            n += ' ' + self.last_name
+        return n
 
 
 class Committee(Base):
