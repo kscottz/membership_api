@@ -55,6 +55,10 @@ class Attendee(Base):
 
     id = Column(Integer, primary_key=True, unique=True)
     meeting_id = Column(ForeignKey('meetings.id'))
+    member_id = Column(ForeignKey('members.id'))
+
+    member = relationship(Member, backref='meetings_attended')
+    meeting = relationship(Meeting, backref='attendees')
 
 
 class Election(Base):
