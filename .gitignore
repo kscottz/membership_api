@@ -34,6 +34,7 @@ wheels/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+pip-selfcheck.json
 
 # Unit test / coverage reports
 htmlcov/
@@ -73,6 +74,9 @@ target/
 # pyenv
 .python-version
 
+# python venv
+bin/
+
 # celery beat schedule file
 celerybeat-schedule
 
@@ -83,6 +87,7 @@ celerybeat-schedule
 .env
 
 # virtualenv
+pyvenv.cfg
 .venv
 venv/
 ENV/
@@ -99,3 +104,7 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Intellij
+*.iml
+.idea
