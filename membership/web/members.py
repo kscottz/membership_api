@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from membership.database.base import Session
-from membership.database.models import Member, Committee, Role
+from membership.database.models import Member, Committee, Role, Meeting, Attendee
 from membership.web.auth import create_auth0_user, requires_auth
 from membership.util.email import send_welcome_email
 member_api = Blueprint('member_api', __name__)
@@ -93,6 +93,14 @@ def add_committee(requester: Member, session: Session):
     return jsonify({'status': 'success'})
 
 
+@member_api.route('/meeting/list', methods=['GET'])
+@requires_auth(admin=False)
+def get_meeting(requester: Member, session: Session):
+    meetings = session.query(Meeting).all()
+    result = {m.id: m.name for m in meetings}
+    return jsonify(result)
+
+
 @member_api.route('/admin', methods=['POST'])
 @requires_auth(admin=True)
 def make_admin(requester: Member, session: Session):
@@ -100,5 +108,26 @@ def make_admin(requester: Member, session: Session):
     committee_id = request.json['committee'] if request.json['committee'] != '0' else None
     role = Role(member_id= member.id, role='admin', committee_id=committee_id)
     session.add(role)
+    session.commit()
+    return jsonify({'status': 'success'})
+
+
+@member_api.route('/member/role', methods=['POST'])
+@requires_auth(admin=True)
+def add_role(requester: Member, session: Session):
+    member_id = request.json.get('member_id', requester.id)
+    committee_id = request.json['committee_id'] if request.json['committee_id'] != '0' else None
+    role = Role(member_id=member_id, role=request.json['role'], committee_id=committee_id)
+    session.add(role)
+    session.commit()
+    return jsonify({'status': 'success'})
+
+
+@member_api.route('/member/attendee', methods=['POST'])
+@requires_auth(admin=True)
+def add_meeting(requester: Member, session: Session):
+    member_id = request.json.get('member_id', requester.id)
+    attend = Attendee(member_id=member_id, meeting_id=request.json['meeting_id'])
+    session.add(attend)
     session.commit()
     return jsonify({'status': 'success'})

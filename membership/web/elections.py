@@ -129,6 +129,17 @@ def submit_vote(requester: Member, session: Session):
     return jsonify({'ballot_id': vote.vote_key})
 
 
+@election_api.route('/election/voter', methods=['POST'])
+@requires_auth(admin=True)
+def add_voter(requester: Member, session: Session):
+    election_id = request.json['election_id']
+    member_id = request.json.get('member_id', requester.id)
+    eligible_voter = EligibleVoter(member_id=member_id, election_id=election_id)
+    session.add(eligible_voter)
+    session.commit()
+    return jsonify({'status': 'success'})
+
+
 @election_api.route('/election/count', methods=['GET'])
 @requires_auth(admin=True)
 def election_count(requester: Member, session: Session):
