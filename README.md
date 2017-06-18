@@ -9,48 +9,64 @@ to use the site.
  
 # Installation for Mac OS X
 
-1. **Download and install Python3**
+1. **Download and install dependencies**
     ```
     brew update
-    brew install python3
+    brew install mysql pyenv
+    ```
+    
+2. **Create the dsa mysql database**
+    1. Start mysql server
+    ```
+    mysql.server start
+    ```
+    2. Create the `dsa` database
+    ```
+    mysql -u root -e "create database dsa"
     ```
 
-2. (NOTE) If you see the error `zlib not available`
-    1. Download and install or upgrade XCode, and install the command line tools
+3. **Download and install python**
+    1. Use pyenv to install python 3.6.1
     ```
-    xcode-select --install
+    pyenv install 3.6.1
     ```
-    2. After you have installed `python3`, you should be able verify this with
+    2. Source the python 
     ```
-    python3 -V
-    # should be >= 3.5.x
+    echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.profile
+    echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bash_profile
+    echo 'eval "$(pyenv init -)"' >> ~/.profile
+    ```
+    3. (Optional) Source your `~/.profile` from your `~/.bashrc` or `~/.zshrc`
+    ```
+    # Always source the .profile on startup (to be shell agnostic)
+    source $HOME/.profile
+    ```
+    4. You should now be able to see that you are using the shimmed python
+    ```
+    which python
+    # Should be $HOME/.pyenv/shims/python
     ```
 
-3. **Create a virtual environment (venv) for this project** (read more about [python 3 venv](https://packaging.python.org/installing/#creating-virtual-environments))
+4. **Create a virtual environment (venv) for this project** (read more about [python 3 venv](https://packaging.python.org/installing/#creating-virtual-environments))
     ```
     # from inside the repo
-    python3 -m venv .
-    ```
-    1. Set the version to python 3.6.1 in `pyvenv.cfg`
-    2. Upgrade python in the venv
-    ```
-    python3 -m venv --upgrade .
+    python -m venv .
     ```
 
-4. **Activate the venv**
+5. **Activate the venv**
     ```
     # from inside the repo
     source bin/activate
     ```
     You should now see `(membership_api)` to the left of your prompt in the terminal
 
-5. **Verify that you are using the correct `pip`**
+6. **Install the python dependencies**
+    1. Verify that you are using the correct `pip`
     ```
     which pip
     # should be ./bin/pip
     ```
-
-6. **Install the development dependencies**
+    2. Install the dev dependencies
     ```
     pip install -r requirements-dev.txt
     ```
@@ -63,20 +79,8 @@ to use the site.
 
 8. **Run the database migrations**
     ```
-    PYTHONPATH=. alembic upgrade head
+    alembic upgrade head
     ```
-    1. (NOTE) If you don't have mysql installed run
-        ```
-        brew install mysql
-        ```
-    2. (NOTE) If you can't connect to the mysql socket `/tmp/mysql.sock`, you need to start the server
-        ```
-        mysql.server start
-        ```
-    3. (NOTE) If you see an error about a missing the `dsa` database, create it with
-        ```
-        mysql -u root -e "create database dsa"
-        ```
 
 9. **Run the server**
     ```
@@ -90,3 +94,24 @@ to use the site.
     ```
 
 Congrats! You did it!
+
+# Troubleshooting
+
+Help! I'm seeing some error. What do I do?
+
+1. **Error** Can't run `alembic upgrade` or start the Flask server.
+```
+... can't connect to the mysql socket `/tmp/mysql.sock` ...
+```
+**Fix**
+```
+mysql.server start
+```
+
+2. **Error** Can't install Python 3.6.1, I'm seeing `zlib not available`
+**Fix**
+Download and install or upgrade XCode, and install the command line tools.
+```
+xcode-select --install
+```
+
