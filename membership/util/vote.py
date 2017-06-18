@@ -70,12 +70,10 @@ class STVElection:
             winner = self.break_tie(round_winners, len(self.previous_rounds) - 1, True)
             self.winners.append(winner.candidate)
             self.remaining_candidates.remove(winner.candidate)
-            if winner.total > 0:
+            if winner.total > self.quota:
                 transfer_weight = Decimal((winner.total - self.quota) / winner.total).quantize(ZERO)
             else:
                 transfer_weight = ZERO
-            # When there are as many spots as candidates, the transfer could be negative
-            transfer_weight = max(transfer_weight, ZERO)
             for vote in winner.votes:
                 vote.transfer(transfer_weight, self.remaining_candidates)
         else:
