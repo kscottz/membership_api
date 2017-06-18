@@ -7,7 +7,6 @@ ONE = Decimal('1.00000')
 
 
 class Vote:
-
     def __init__(self, choices: List[Any]) -> None:
         self.weight = ONE
         self.choice_stack = list(reversed(choices))
@@ -20,15 +19,14 @@ class Vote:
 
 
 class CandidateVotes:
-
     def __init__(self, candidate):
         self.candidate = candidate
         self.total = ZERO
+        self.transfer_total = ZERO
         self.votes = []
 
 
 class STVElection:
-
     def __init__(self, candidates, num_winners, choices_list: List[List[Any]]):
         self.votes = [Vote(choices) for choices in choices_list]
         self.winners = []
@@ -36,7 +34,7 @@ class STVElection:
         self.num_winners = num_winners
         self.previous_rounds = []
 
-        self.quota = int(len(self.votes)/(self.num_winners + 1)) + 1
+        self.quota = int(len(self.votes) / (self.num_winners + 1)) + 1
         getcontext().prec = 5
 
     def hold_election(self):
@@ -52,8 +50,13 @@ class STVElection:
             if len(vote.choice_stack) > 0 and vote.weight > ZERO:
                 cv = candidate_votes[vote.choice_stack[-1]]
                 cv.total += vote.weight
+                # If this is a transfer vote, record it as such
+                if vote.weight < ONE:
+                    cv.transfer_total += vote.weight
                 cv.votes.append(vote)
-        self.previous_rounds.append({cv.candidate: cv.total for cv in candidate_votes.values()})
+        self.previous_rounds.append(
+            {cv.candidate: {'total_votes': cv.total, 'total_transfer_votes': cv.transfer_total} for cv in
+             candidate_votes.values()})
 
         result = list(candidate_votes.values())
         result.sort(key=lambda x: x.total, reverse=True)
@@ -68,7 +71,7 @@ class STVElection:
             self.winners.append(winner.candidate)
             self.remaining_candidates.remove(winner.candidate)
             if winner.total > 0:
-                transfer_weight = Decimal((winner.total - self.quota)/winner.total).quantize(ZERO)
+                transfer_weight = Decimal((winner.total - self.quota) / winner.total).quantize(ZERO)
             else:
                 transfer_weight = ZERO
             # When there are as many spots as candidates, the transfer could be negative
@@ -95,16 +98,10 @@ class STVElection:
         max_vote = None
         next_round_winners = []
         for winner in round_winners:
-            total = multiplier * self.previous_rounds[voting_round - 1][winner.candidate]
+            total = multiplier * self.previous_rounds[voting_round - 1][winner.candidate]['total_votes']
             if max_vote is None or total > max_vote:
                 next_round_winners = [winner]
                 max_vote = total
             elif total == max_vote:
                 next_round_winners.append(winner)
         return self.break_tie(next_round_winners, voting_round - 1, win)
-
-
-
-
-
-

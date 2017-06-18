@@ -147,7 +147,14 @@ def election_count(requester: Member, session: Session):
     election = session.query(Election).get(election_id)
     stv = hold_election(election)
     winners = [session.query(Candidate).get(cid).member.name for cid in stv.winners]
-    return jsonify({'winners': winners})
+    round_information = {}
+    for round_number, round in enumerate(stv.previous_rounds):
+        candidate_information = {}
+        for cid, vote_info in round.items():
+            candidate_name = session.query(Candidate).get(cid).member.name
+            candidate_information[candidate_name] = vote_info
+        round_information[round_number + 1] = candidate_information
+    return jsonify({'winners': winners, 'round_information': round_information})
 
 
 def hold_election(election: Election):
@@ -165,7 +172,7 @@ def create_vote(session, election_id, digits):
     rolled_back = False
     while i < 5:
         try:
-            a = random.randint(10**(digits-1), 10**digits - 1)
+            a = random.randint(10 ** (digits - 1), 10 ** digits - 1)
             v = Vote(vote_key=a, election_id=election_id)
             session.add(v)
             session.commit()
