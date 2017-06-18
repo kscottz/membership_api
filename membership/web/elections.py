@@ -4,6 +4,7 @@ from membership.database.models import Candidate, Election, Member, EligibleVote
 from membership.web.auth import requires_auth
 from membership.web.util import BadRequest
 from membership.util.vote import STVElection
+from membership.web.util import CustomEncoder, custom_jsonify
 import random
 from sqlalchemy.exc import IntegrityError
 
@@ -154,7 +155,8 @@ def election_count(requester: Member, session: Session):
             candidate_name = session.query(Candidate).get(cid).member.name
             candidate_information[candidate_name] = vote_info
         round_information[round_number + 1] = candidate_information
-    return jsonify({'winners': winners, 'round_information': round_information})
+    return custom_jsonify(data={'winners': winners, 'round_information': round_information},
+                          encoder=CustomEncoder)
 
 
 def hold_election(election: Election):

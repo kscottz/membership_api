@@ -1,7 +1,12 @@
+import datetime
 from enum import Enum
 import json
+
+from decimal import Decimal
 from flask import Response
 import logging
+
+from flask.json import JSONEncoder
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from typing import List
 
@@ -15,7 +20,7 @@ class BadRequest(Response):
             json.dumps(payload), status=400, mimetype='application/json')
 
 
-def new_alchemy_encoder(fields_to_expand: List[str]=[]):
+def new_alchemy_encoder(fields_to_expand: List[str] = []):
     _visited_objs = []  # type: List[DeclarativeMeta]
 
     class AlchemyEncoder(json.JSONEncoder):
@@ -48,3 +53,23 @@ def new_alchemy_encoder(fields_to_expand: List[str]=[]):
             return json.JSONEncoder.default(self, obj)
 
     return AlchemyEncoder
+
+
+class CustomEncoder(JSONEncoder):
+    """ Custom encoder class converts Decimals to strings and datetime objects into ISO
+    ISO formatted strings. """
+
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        if isinstance(obj, datetime.date):
+            return obj.isoformat()
+        return JSONEncoder.default(self, obj)
+
+
+def custom_jsonify(data, encoder, status=200) -> Response:
+    return Response(
+        status=status, response=json.dumps(
+            data, cls=encoder), content_type='application/json')
