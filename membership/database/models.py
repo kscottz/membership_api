@@ -14,7 +14,7 @@ class Member(Base):
     first_name = Column(String(45))
     last_name = Column(String(45))
     email_address = Column(String(254), unique=True)
-    biography = Column(String(10000), default="# Wow!\n\nThis is your *default* user.")
+    biography = Column(String(10000))
 
     @property
     def name(self):
