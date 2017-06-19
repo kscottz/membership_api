@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, Response
 from membership.database.base import Session
 from membership.database.models import Candidate, Election, Member, EligibleVoter, Vote, Ranking
 from membership.web.auth import requires_auth
@@ -45,6 +45,21 @@ def add_election(requester: Member, session: Session):
         session.add(candidate)
     session.commit()
     return jsonify({'status': 'success'})
+
+
+@election_api.route('/election/<int:election_id>/vote/<int:ballot_key>', methods=['GET'])
+@requires_auth(admin=False)
+def get_vote(requester: Member, session: Session, election_id: int, ballot_key: int):
+    vote = session.query(Vote).filter(Vote.election_id == election_id, Vote.vote_key == ballot_key).one_or_none()
+    if not vote:
+        return Response('Ballot #{} has not been cast for election_id={}'.format(ballot_key, election_id), 404)
+    else:
+        rankings = [ranking.candidate_id for ranking in vote.ranking]
+        return jsonify({
+            'election_id': election_id,
+            'ballot_key': ballot_key,
+            'rankings': rankings
+        })
 
 
 @election_api.route('/ballot/issue', methods=['POST'])
