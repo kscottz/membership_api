@@ -120,7 +120,7 @@ def submit_paper_vote(requester: Member, session: Session):
         rankings = sorted(rankings.items(), key=operator.itemgetter(1))
         rankings = [ranking[0] for ranking in rankings]
     if not isinstance(rankings, list):
-        return BadRequest('Rankings must either a list of candidate ids or a map'
+        return BadRequest('Rankings must either be a list of candidate ids or a map'
                           'of candidate_id to ranking.')
 
     vote = session.query(Vote).filter_by(
@@ -163,7 +163,7 @@ def submit_vote(requester: Member, session: Session):
         rankings = sorted(rankings.items(), key=operator.itemgetter(1))
         rankings = [ranking[0] for ranking in rankings]
     if not isinstance(rankings, list):
-        return BadRequest('Rankings must either a list of candidate ids or a map'
+        return BadRequest('Rankings must either be a list of candidate ids or a map'
                           'of candidate_id to ranking.')
 
     eligible = session.query(EligibleVoter). \
@@ -183,7 +183,6 @@ def submit_vote(requester: Member, session: Session):
             return BadRequest('You have either already voted or received a paper ballot for this '
                               'election.')
         eligible.voted = True
-
 
     for rank, candidate_id in enumerate(rankings):
         ranking = Ranking(rank=rank, candidate_id=candidate_id)
