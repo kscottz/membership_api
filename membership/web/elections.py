@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, Response
 from membership.database.base import Session
 from membership.database.models import Candidate, Election, Member, EligibleVoter, Vote, Ranking
 from membership.web.auth import requires_auth
@@ -7,6 +7,7 @@ from membership.util.vote import STVElection
 from membership.web.util import CustomEncoder, custom_jsonify
 import random
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
 
 election_api = Blueprint('election_api', __name__)
 
@@ -48,6 +49,34 @@ def add_election(requester: Member, session: Session):
     return jsonify({'status': 'success'})
 
 
+@election_api.route('/election/eligible/list')
+@requires_auth(admin=True)
+def get_eligible(requester: Member, session: Session):
+    election_id = request.args['election_id']
+    eligibles = session.query(EligibleVoter)\
+        .filter_by(election_id=election_id).options(joinedload(EligibleVoter.member)).all()
+    results = {}
+    for eligible in eligibles:
+        results[eligible.member_id] = {'name': eligible.member.name,
+                                       'email_address': eligible.member.email_address}
+    return jsonify(results)
+
+
+@election_api.route('/election/<int:election_id>/vote/<int:ballot_key>', methods=['GET'])
+@requires_auth(admin=False)
+def get_vote(requester: Member, session: Session, election_id: int, ballot_key: int):
+    vote = session.query(Vote).filter(Vote.election_id == election_id, Vote.vote_key == ballot_key).one_or_none()
+    if not vote:
+        return Response('Ballot #{} has not been cast for election_id={}'.format(ballot_key, election_id), 404)
+    else:
+        rankings = [ranking.candidate_id for ranking in vote.ranking]
+        return jsonify({
+            'election_id': election_id,
+            'ballot_key': ballot_key,
+            'rankings': rankings
+        })
+
+
 @election_api.route('/ballot/issue', methods=['POST'])
 @requires_auth(admin=True)
 def issue_ballot(requester: Member, session: Session):
@@ -81,16 +110,25 @@ def add_paper_ballots(requester: Member, session: Session):
 @requires_auth(admin=True)
 def submit_paper_vote(requester: Member, session: Session):
     election_id = request.json['election_id']
+    election = session.query(Election).get(election_id)
+    if election.status == 'final':
+        return BadRequest('You may not submit more votes after an election has been marked final')
     vote_key = request.json['ballot_key']
-    vote = session.query(election_id=election_id, vote_key=vote_key).with_for_update().one_or_none()
+    vote = session.query(Vote).filter_by(
+        election_id=election_id,
+        vote_key=vote_key).with_for_update().one_or_none()
 
-    if vote.ranking and not request.json['override']:
+    if not vote:
+        return Response('Ballot #{} for election_id={} not claimed'.format(vote_key, election_id), 404)
+
+    if vote.ranking and not request.json.get('override', False):
         if len(vote.ranking) != len(request.json['rankings']):
             return jsonify({'status': 'mismatch'})
         for rank, candidate_id in enumerate(request.json['rankings']):
             if candidate_id != vote.ranking[rank].candidate_id:
                 return jsonify({'status': 'mismatch'})
-    if request.json['override']:
+        return jsonify({'status': 'match'})
+    if request.json.get('override', False):
         for rank in vote.ranking:
             session.delete(rank)
     for rank, candidate_id in enumerate(request.json['rankings']):
@@ -105,6 +143,9 @@ def submit_paper_vote(requester: Member, session: Session):
 @requires_auth()
 def submit_vote(requester: Member, session: Session):
     election_id = request.json['election_id']
+    election = session.query(Election).get(election_id)
+    if election.status == 'final' or election.status == 'polls closed':
+        return BadRequest('You may not submit a vote after the polls have closed')
     eligible = session.query(EligibleVoter). \
         filter_by(member_id=requester.id, election_id=election_id).with_for_update().one_or_none()
     if not eligible:

@@ -26,7 +26,8 @@ def get_member(requester: Member, session: Session):
 
 
 def get_member_basics(member):
-    return {'info': {'first_name': member.first_name, 'last_name': member.last_name},
+    return {'id': member.id,
+            'info': {'first_name': member.first_name, 'last_name': member.last_name, 'biography': member.biography},
             'roles':
                 [{'role': role.role, 'committee': role.committee.name
                     if role.committee else 'general'} for role in member.roles]
