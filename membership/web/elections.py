@@ -4,6 +4,7 @@ from membership.database.models import Candidate, Election, Member, EligibleVote
 from membership.web.auth import requires_auth
 from membership.web.util import BadRequest
 from membership.util.vote import STVElection
+import operator
 import random
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
@@ -113,6 +114,15 @@ def submit_paper_vote(requester: Member, session: Session):
     if election.status == 'final':
         return BadRequest('You may not submit more votes after an election has been marked final')
     vote_key = request.json['ballot_key']
+
+    rankings = request.json.get('rankings')
+    if isinstance(rankings, dict):
+        rankings = sorted(rankings.items(), key=operator.itemgetter(1))
+        rankings = [ranking[0] for ranking in rankings]
+    if not isinstance(rankings, list):
+        return BadRequest('Rankings must either a list of candidate ids or a map'
+                          'of candidate_id to ranking.')
+
     vote = session.query(Vote).filter_by(
         election_id=election_id,
         vote_key=vote_key).with_for_update().one_or_none()
@@ -121,16 +131,18 @@ def submit_paper_vote(requester: Member, session: Session):
         return Response('Ballot #{} for election_id={} not claimed'.format(vote_key, election_id), 404)
 
     if vote.ranking and not request.json.get('override', False):
-        if len(vote.ranking) != len(request.json['rankings']):
+        if len(vote.ranking) != len(rankings):
             return jsonify({'status': 'mismatch'})
-        for rank, candidate_id in enumerate(request.json['rankings']):
+        for rank, candidate_id in enumerate(rankings):
             if candidate_id != vote.ranking[rank].candidate_id:
                 return jsonify({'status': 'mismatch'})
         return jsonify({'status': 'match'})
+
     if request.json.get('override', False):
         for rank in vote.ranking:
             session.delete(rank)
-    for rank, candidate_id in enumerate(request.json['rankings']):
+
+    for rank, candidate_id in enumerate(rankings):
         ranking = Ranking(rank=rank, candidate_id=candidate_id)
         vote.ranking.append(ranking)
     session.add(vote)
@@ -145,6 +157,15 @@ def submit_vote(requester: Member, session: Session):
     election = session.query(Election).get(election_id)
     if election.status == 'final' or election.status == 'polls closed':
         return BadRequest('You may not submit a vote after the polls have closed')
+
+    rankings = request.json.get('rankings')
+    if isinstance(rankings, dict):
+        rankings = sorted(rankings.items(), key=operator.itemgetter(1))
+        rankings = [ranking[0] for ranking in rankings]
+    if not isinstance(rankings, list):
+        return BadRequest('Rankings must either a list of candidate ids or a map'
+                          'of candidate_id to ranking.')
+
     eligible = session.query(EligibleVoter). \
         filter_by(member_id=requester.id, election_id=election_id).with_for_update().one_or_none()
     if not eligible:
@@ -162,7 +183,9 @@ def submit_vote(requester: Member, session: Session):
             return BadRequest('You have either already voted or received a paper ballot for this '
                               'election.')
         eligible.voted = True
-    for rank, candidate_id in enumerate(request.json['rankings']):
+
+
+    for rank, candidate_id in enumerate(rankings):
         ranking = Ranking(rank=rank, candidate_id=candidate_id)
         vote.ranking.append(ranking)
     session.add(vote)
