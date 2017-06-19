@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from membership.database.base import Session
 from membership.database.models import Member, Committee, Role, Meeting, Attendee
 from membership.web.auth import create_auth0_user, requires_auth
+from membership.web.util import BadRequest
 from membership.util.email import send_welcome_email
 member_api = Blueprint('member_api', __name__)
 
@@ -100,6 +101,24 @@ def get_meeting(requester: Member, session: Session):
     meetings = session.query(Meeting).all()
     result = {m.id: m.name for m in meetings}
     return jsonify(result)
+
+
+@member_api.route('/meeting/attend', methods=['POST'])
+@requires_auth(admin=False)
+def attend_meeting(requester: Member, session: Session):
+    short_id = request.json['meeting_short_id']
+    meeting = session.query(Meeting).filter_by(short_id=short_id).one_or_none()
+    if not meeting:
+        return BadRequest('Invalid meeting id')
+    if len(session.query(Attendee).filter_by(meeting_id=meeting.id,
+                                             member_id=requester.id).all()) > 0:
+        return BadRequest('You have already logged into this meeting')
+    a = Attendee()
+    a.meeting = meeting
+    a.member = requester
+    session.add(a)
+    session.commit()
+    return jsonify({'status': 'success'})
 
 
 @member_api.route('/admin', methods=['POST'])

@@ -27,7 +27,6 @@ def get_election_by_id(requester: Member, session: Session):
               'number_winners': election.number_winners,
               'candidates': [{'id': candidate.id,
                               'name': candidate.member.name} for candidate in election.candidates],
-              'votes_cast': len(election.votes),
               'status': election.status}
     return jsonify(result)
 
