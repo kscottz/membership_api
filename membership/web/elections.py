@@ -112,15 +112,17 @@ def submit_paper_vote(requester: Member, session: Session):
     if election.status == 'final':
         return BadRequest('You may not submit more votes after an election has been marked final')
     vote_key = request.json['ballot_key']
-    vote = session.query(election_id=election_id, vote_key=vote_key).with_for_update().one_or_none()
+    vote = session.query(Vote).filter_by(election_id=election_id,
+                                                  vote_key=vote_key).with_for_update().one_or_none()
 
-    if vote.ranking and not request.json['override']:
+    if vote.ranking and not request.json.get('override', False):
         if len(vote.ranking) != len(request.json['rankings']):
             return jsonify({'status': 'mismatch'})
         for rank, candidate_id in enumerate(request.json['rankings']):
             if candidate_id != vote.ranking[rank].candidate_id:
                 return jsonify({'status': 'mismatch'})
-    if request.json['override']:
+        return jsonify({'status': 'match'})
+    if request.json.get('override', False):
         for rank in vote.ranking:
             session.delete(rank)
     for rank, candidate_id in enumerate(request.json['rankings']):
