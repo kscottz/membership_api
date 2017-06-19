@@ -75,6 +75,7 @@ def get_vote(requester: Member, session: Session, election_id: int, ballot_key: 
             'rankings': rankings
         })
 
+
 @election_api.route('/ballot/issue', methods=['POST'])
 @requires_auth(admin=True)
 def issue_ballot(requester: Member, session: Session):
@@ -112,8 +113,12 @@ def submit_paper_vote(requester: Member, session: Session):
     if election.status == 'final':
         return BadRequest('You may not submit more votes after an election has been marked final')
     vote_key = request.json['ballot_key']
-    vote = session.query(Vote).filter_by(election_id=election_id,
-                                                  vote_key=vote_key).with_for_update().one_or_none()
+    vote = session.query(Vote).filter_by(
+        election_id=election_id,
+        vote_key=vote_key).with_for_update().one_or_none()
+
+    if not vote:
+        return Response('Ballot #{} for election_id={} not claimed'.format(vote_key, election_id), 404)
 
     if vote.ranking and not request.json.get('override', False):
         if len(vote.ranking) != len(request.json['rankings']):
