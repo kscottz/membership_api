@@ -20,7 +20,7 @@ class BadRequest(Response):
             json.dumps(payload), status=400, mimetype='application/json')
 
 
-def new_alchemy_encoder(fields_to_expand: List[str] = []):
+def new_alchemy_encoder(fields_to_expand: List[str]=[]):
     _visited_objs = []  # type: List[DeclarativeMeta]
 
     class AlchemyEncoder(json.JSONEncoder):
