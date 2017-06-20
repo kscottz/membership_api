@@ -57,7 +57,7 @@ def new_alchemy_encoder(fields_to_expand: List[str]=[]):
 
 class CustomEncoder(JSONEncoder):
     """ Custom encoder class converts Decimals to strings and datetime objects into ISO
-    ISO formatted strings. """
+    formatted strings. """
 
     def default(self, obj):
         if isinstance(obj, Decimal):
