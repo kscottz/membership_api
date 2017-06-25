@@ -91,7 +91,7 @@ function install() {
     esac
 }
 
-function deploy() {
+function push() {
     mv ${STAGE_DIR} /opt/${GITHUB_PROJECT}
 }
 
@@ -104,8 +104,8 @@ function restart() {
     # TODO restart nginx?
 }
 
-mkdir -p ${STAGE_DIR}
+fetch
 install python3
 install systemd
-deploy
+push
 restart
