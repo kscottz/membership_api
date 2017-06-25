@@ -7,51 +7,51 @@ do
     echo "$1 $2"
     case $1 in
         -u)
-            USER=$2
+            GITHUB_USER=$2
             ;;
         -p)
-            PROJECT="$2"
+            GITHUB_PROJECT="$2"
             ;;
         -b)
-            BRANCH="$2"
+            GITHUB_BRANCH="$2"
             ;;
     esac
     shift
 done
 
-if [ -z ${USER} ]; then
-    USER=DSASanFrancisco
+if [ -z ${GITHUB_USER} ]; then
+    GITHUB_USER=DSASanFrancisco
 fi
 
-if [ -z ${PROJECT} ]; then
-    PROJECT=membership_api
+if [ -z ${GITHUB_PROJECT} ]; then
+    GITHUB_PROJECT=membership_api
 fi
 
-if [ -z ${BRANCH} ]; then
-    BRANCH=master
+if [ -z ${GITHUB_BRANCH} ]; then
+    GITHUB_BRANCH=master
 fi
 
-ARTIFACT_ID="$USER-$PROJECT-$BRANCH"
-STAGE="/opt/deploy/stage/$ARTIFACT_ID"
+ARTIFACT_ID="$GITHUB_USER-$GITHUB_PROJECT-$GITHUB_BRANCH"
+STAGE_DIR="/opt/deploy/stage/$ARTIFACT_ID"
 
 function fetch() {
     ZIP_FILENAME="$ARTIFACT_ID.tar.gz"
-    wget https://github.com/${USER}/${PROJECT}/archive/${BRANCH}.tar.gz -O /tmp/${ZIP_FILENAME}
+    wget https://github.com/${GITHUB_USER}/${GITHUB_PROJECT}/archive/${GITHUB_BRANCH}.tar.gz -O /tmp/${ZIP_FILENAME}
     cd /tmp
     tar -xvf /tmp/${ZIP_FILENAME}
-    rm -r ${STAGE}
-    mv /tmp/${PROJECT}-${BRANCH} ${STAGE}
+    rm -r ${STAGE_DIR}
+    mv /tmp/${GITHUB_PROJECT}-${GITHUB_BRANCH} ${STAGE_DIR}
 }
 
 function venv() {
     case $1 in
         python)
             cd /opt/deploy/venv
-            virtualenv -p python ${PROJECT}
+            virtualenv -p python ${GITHUB_PROJECT}
             ;;
         python3)
             cd /opt/deploy/venv
-            virtualenv -p python3 ${PROJECT}
+            virtualenv -p python3 ${GITHUB_PROJECT}
             ;;
     esac
 }
@@ -59,12 +59,12 @@ function venv() {
 function upgrade() {
     case $1 in
         pip)
-            source /opt/deploy/venv/${PROJECT}/bin/activate
-            pip install -r ${STAGE}/requirements.txt
+            source /opt/deploy/venv/${GITHUB_PROJECT}/bin/activate
+            pip install -r ${STAGE_DIR}/requirements.txt
             ;;
         pip3)
-            source /opt/deploy/venv/${PROJECT}/bin/activate
-            pip3 install -r ${STAGE}/requirements.txt
+            source /opt/deploy/venv/${GITHUB_PROJECT}/bin/activate
+            pip3 install -r ${STAGE_DIR}/requirements.txt
             ;;
     esac
 }
@@ -72,7 +72,7 @@ function upgrade() {
 function install() {
     case $1 in
         env)
-            cp ${STAGE}/.env
+            cp ${STAGE_DIR}/.env
             ;;
         python)
             upgrade pip
@@ -81,20 +81,21 @@ function install() {
             upgrade pip3
             ;;
         systemd)
-            cp ${STAGE}/init/${PROJECT}.service /etc/systemd/system/.
+            cp ${STAGE_DIR}/init/${GITHUB_PROJECT}.service /etc/systemd/system/.
             ;;
     esac
 }
 
 function restart() {
-    systemctl stop ${PROJECT}.service
+    systemctl stop ${GITHUB_PROJECT}.service
     fetch
     # TODO: Figure out how avoid sharing virtualenv space using docker
-    source /opt/deploy/venv/${PROJECT}/bin/activate
-    systemctl start ${PROJECT}.service
+    source /opt/deploy/venv/${GITHUB_PROJECT}/bin/activate
+    systemctl start ${GITHUB_PROJECT}.service
     # TODO restart nginx?
 }
 
-mkdir -p /opt/deploy/stage
+mkdir -p ${STAGE_DIR}
 install python3
+install systemd
 restart
