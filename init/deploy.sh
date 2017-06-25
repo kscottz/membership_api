@@ -15,6 +15,8 @@ do
         -b)
             GITHUB_BRANCH="$2"
             ;;
+        -e)
+            DOTENV="$2"
     esac
     shift
     shift
@@ -76,7 +78,7 @@ function upgrade() {
 function install() {
     case $1 in
         env)
-            cp ${STAGE_DIR}/.env
+            cp env/${GITHUB_PROJECT}/${DOTENV}.env
             ;;
         python)
             pip install virtualenv
@@ -95,6 +97,7 @@ function install() {
 }
 
 function push() {
+    rm -rf /opt/${GITHUB_PROJECT}
     mv ${STAGE_DIR} /opt/${GITHUB_PROJECT}
 }
 
