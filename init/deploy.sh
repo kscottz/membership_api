@@ -2,37 +2,56 @@
 set -x
 set -e
 
-USER="$1"
+while [ $# -gt 0 ]
+do
+    echo "$1 $2"
+    case $1 in
+        -u)
+            USER=$2
+            ;;
+        -p)
+            PROJECT="$2"
+            ;;
+        -b)
+            BRANCH="$2"
+            ;;
+    esac
+    shift
+done
+
 if [ -z ${USER} ]; then
     USER=DSASanFrancisco
 fi
 
-PROJECT="$2"
 if [ -z ${PROJECT} ]; then
     PROJECT=membership_api
 fi
 
-BRANCH="$3"
 if [ -z ${BRANCH} ]; then
     BRANCH=master
 fi
 
-ARTIFACT_ID="${USER}-${PROJECT}-${BRANCH}"
+ARTIFACT_ID="$USER-$PROJECT-$BRANCH"
+STAGE="/opt/deploy/stage/$ARTIFACT_ID"
 
 function fetch() {
     ZIP_FILENAME="$ARTIFACT_ID.tar.gz"
     wget https://github.com/${USER}/${PROJECT}/archive/${BRANCH}.tar.gz -O /tmp/${ZIP_FILENAME}
     cd /tmp
     tar -xvf /tmp/${ZIP_FILENAME}
-    rm -r /opt/deploy/stage/${ARTIFACT_ID}
-    mv /tmp/${PROJECT}-${BRANCH} /opt/deploy/stage/${ARTIFACT_ID}
+    rm -r ${STAGE}
+    mv /tmp/${PROJECT}-${BRANCH} ${STAGE}
 }
 
 function venv() {
     case $1 in
+        python)
+            cd /opt/deploy/venv
+            virtualenv -p python ${PROJECT}
+            ;;
         python3)
             cd /opt/deploy/venv
-            virtualenv ${PROJECT}
+            virtualenv -p python3 ${PROJECT}
             ;;
     esac
 }
@@ -41,7 +60,28 @@ function upgrade() {
     case $1 in
         pip)
             source /opt/deploy/venv/${PROJECT}/bin/activate
-            pip install -r /opt/deploy/stage/${ARTIFACT_ID}/requirements.txt
+            pip install -r ${STAGE}/requirements.txt
+            ;;
+        pip3)
+            source /opt/deploy/venv/${PROJECT}/bin/activate
+            pip3 install -r ${STAGE}/requirements.txt
+            ;;
+    esac
+}
+
+function install() {
+    case $1 in
+        env)
+            cp ${STAGE}/.env
+            ;;
+        python)
+            upgrade pip
+            ;;
+        python3)
+            upgrade pip3
+            ;;
+        systemd)
+            cp ${STAGE}/init/${PROJECT}.service /etc/systemd/system/.
             ;;
     esac
 }
@@ -56,7 +96,5 @@ function restart() {
 }
 
 mkdir -p /opt/deploy/stage
-#install python3
-venv python3
-upgrade pip
+install python3
 restart
