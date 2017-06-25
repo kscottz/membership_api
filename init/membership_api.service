@@ -5,4 +5,4 @@ After=network.target
 [Service]
 WorkingDirectory=/opt/membership_api
 Environment="PATH=/opt/deploy/venv/membership_api/bin"
-ExecStart=/bin/bash -c 'source /opt/deploy/venv/membership_api/bin/activate; uwsgi --ini init/uwsgi.ini --logto2 /opt/membership_api/uwsgi.log --uid 1001 --gid 1001'
+ExecStart=/bin/bash -c 'source /opt/deploy/venv/membership_api/bin/activate; uwsgi --ini init/uwsgi.ini --logto2 /opt/membership_api/uwsgi.log --uid 1001 --gid 33'
