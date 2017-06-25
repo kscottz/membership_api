@@ -40,7 +40,9 @@ function fetch() {
     wget https://github.com/${GITHUB_USER}/${GITHUB_PROJECT}/archive/${GITHUB_BRANCH}.tar.gz -O /tmp/${ZIP_FILENAME}
     cd /tmp
     tar -xvf /tmp/${ZIP_FILENAME}
-    rm -r ${STAGE_DIR}
+    if [ -d ${STAGE_DIR} ]; then
+        rm -r ${STAGE_DIR}
+    fi
     mv /tmp/${GITHUB_PROJECT}-${GITHUB_BRANCH} ${STAGE_DIR}
 }
 
