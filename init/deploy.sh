@@ -28,9 +28,9 @@ function fetch() {
 function restart() {
     systemctl stop ${PROJECT}.service
     fetch
-    # TODO: figure out how to standardize this
+    # TODO: Figure out how avoid sharing virtualenv space using docker
     source /opt/deploy/venv/${PROJECT}/bin/activate
-    pip install -r /opt/deploy/${ARTIFACT_ID}/requirements.txt
+    pip install -r /opt/deploy/stage/${ARTIFACT_ID}/requirements.txt
     systemctl start ${PROJECT}.service
     # TODO restart nginx?
 }
