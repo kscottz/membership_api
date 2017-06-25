@@ -89,7 +89,7 @@ def generate_auth0_token():
 
 def create_auth0_user(email):
     if not USE_AUTH:
-        return PORTAL_URL
+        return PORTAL_URL.geturl()
     # create the user
     payload = {
         'connection': AUTH_CONNECTION,
@@ -108,7 +108,7 @@ def create_auth0_user(email):
 
     # get a password change URL
     payload = {
-        'result_url': PORTAL_URL,
+        'result_url': PORTAL_URL.geturl(),
         'user_id': user_id
     }
     r = requests.post(AUTH_URL + 'api/v2/tickets/password-change', json=payload, headers=headers)

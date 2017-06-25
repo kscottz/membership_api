@@ -1,3 +1,5 @@
-import os
+from config.reader import env
+from urllib.parse import urlparse, ParseResult
 
-PORTAL_URL = os.environ.get('PORTAL_URL', 'http://localhost:3000')
+APP_PORT: int = env.safe_parse_or_value('APP_PORT', 8080, int)
+PORTAL_URL: ParseResult = env.safe_parse_string('PORTAL_URL', 'http://localhost:3000', urlparse)
