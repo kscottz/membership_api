@@ -75,9 +75,11 @@ function install() {
             cp ${STAGE_DIR}/.env
             ;;
         python)
+            venv python
             upgrade pip
             ;;
         python3)
+            venv python3
             upgrade pip3
             ;;
         systemd)
