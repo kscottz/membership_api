@@ -17,10 +17,12 @@ if [ -z ${BRANCH} ]; then
 fi
 
 function fetch() {
-    ZIP_FILENAME="${USER}-${PROJECT}-${BRANCH}.tar.gz"
+    ARTIFACT_NAME="${USER}-${PROJECT}-${BRANCH}"
+    ZIP_FILENAME="$ARTIFACT_NAME.tar.gz"
     wget https://github.com/${USER}/${PROJECT}/archive/${BRANCH}.tar.gz -O /tmp/${ZIP_FILENAME}
+    cd /tmp
     tar -xvf /tmp/${ZIP_FILENAME}
-    mv /tmp/${PROJECT}-${BRANCH} /opt/deploy/${PROJECT}
+    mv /tmp/${PROJECT}-${BRANCH} /opt/deploy/stage/${ARTIFACT_NAME}
 }
 
 function restart() {
@@ -32,4 +34,5 @@ function restart() {
     # TODO restart nginx?
 }
 
+mkdir -p /opt/deploy/stage
 restart
