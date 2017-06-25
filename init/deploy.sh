@@ -47,11 +47,11 @@ function venv() {
     case $1 in
         python)
             cd /opt/deploy/venv
-            virtualenv -p python ${GITHUB_PROJECT}
+            virtualenv ${GITHUB_PROJECT}
             ;;
         python3)
             cd /opt/deploy/venv
-            virtualenv -p python3 ${GITHUB_PROJECT}
+            virtualenv ${GITHUB_PROJECT}
             ;;
     esac
 }
@@ -75,10 +75,12 @@ function install() {
             cp ${STAGE_DIR}/.env
             ;;
         python)
+            pip install virtualenv
             venv python
             upgrade pip
             ;;
         python3)
+            pip3 install virtualenv
             venv python3
             upgrade pip3
             ;;
