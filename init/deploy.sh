@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 
 USER="$1"
-PROJECT="$2"
-BRANCH="$3"
-ARTIFACT_ID="${USER}-${PROJECT}-${BRANCH}"
-
 if [ -z ${USER} ]; then
     USER=DSASanFrancisco
 fi
 
+PROJECT="$2"
 if [ -z ${PROJECT} ]; then
     PROJECT=membership_api
 fi
 
+BRANCH="$3"
 if [ -z ${BRANCH} ]; then
     BRANCH=master
 fi
+
+ARTIFACT_ID="${USER}-${PROJECT}-${BRANCH}"
 
 function fetch() {
     ZIP_FILENAME="$ARTIFACT_ID.tar.gz"
