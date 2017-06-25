@@ -25,15 +25,35 @@ function fetch() {
     mv /tmp/${PROJECT}-${BRANCH} /opt/deploy/stage/${ARTIFACT_ID}
 }
 
+function venv() {
+    case $1 in
+        python3)
+            cd /opt/deploy/venv
+            virtualenv ${PROJECT}
+            ;;
+    esac
+}
+
+function upgrade() {
+    case $1 in
+        pip)
+            source /opt/deploy/venv/${PROJECT}/bin/activate
+            pip install -r /opt/deploy/stage/${ARTIFACT_ID}/requirements.txt
+            ;;
+    esac
+}
+
 function restart() {
     systemctl stop ${PROJECT}.service
     fetch
     # TODO: Figure out how avoid sharing virtualenv space using docker
     source /opt/deploy/venv/${PROJECT}/bin/activate
-    pip install -r /opt/deploy/stage/${ARTIFACT_ID}/requirements.txt
     systemctl start ${PROJECT}.service
     # TODO restart nginx?
 }
 
 mkdir -p /opt/deploy/stage
+#install python3
+venv python3
+upgrade pip
 restart
