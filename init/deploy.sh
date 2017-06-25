@@ -44,6 +44,7 @@ function fetch() {
     mv /tmp/${GITHUB_PROJECT}-${GITHUB_BRANCH} ${STAGE_DIR}
 }
 
+# TODO: Figure out how avoid sharing virtualenv space using docker
 function venv() {
     case $1 in
         python)
@@ -95,17 +96,18 @@ function push() {
     mv ${STAGE_DIR} /opt/${GITHUB_PROJECT}
 }
 
-function restart() {
+function stop() {
     systemctl stop ${GITHUB_PROJECT}.service
-    fetch
-    # TODO: Figure out how avoid sharing virtualenv space using docker
-    source /opt/deploy/venv/${GITHUB_PROJECT}/bin/activate
+}
+
+function start() {
     systemctl start ${GITHUB_PROJECT}.service
-    # TODO restart nginx?
 }
 
 fetch
 install python3
 install systemd
 push
-restart
+stop
+start
+# TODO restart nginx?
