@@ -91,6 +91,10 @@ function install() {
     esac
 }
 
+function deploy() {
+    mv ${STAGE_DIR} /opt/${GITHUB_PROJECT}
+}
+
 function restart() {
     systemctl stop ${GITHUB_PROJECT}.service
     fetch
@@ -103,4 +107,5 @@ function restart() {
 mkdir -p ${STAGE_DIR}
 install python3
 install systemd
+deploy
 restart
