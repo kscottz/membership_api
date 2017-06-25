@@ -102,8 +102,8 @@ function push() {
 }
 
 function reload() {
-    systemctl stop ${GITHUB_PROJECT}.service
     systemctl daemon-reload
+    systemctl stop ${GITHUB_PROJECT}.service
     systemctl start ${GITHUB_PROJECT}.service
 }
 
