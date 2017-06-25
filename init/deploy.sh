@@ -101,11 +101,9 @@ function push() {
     mv ${STAGE_DIR} /opt/${GITHUB_PROJECT}
 }
 
-function stop() {
+function reload() {
     systemctl stop ${GITHUB_PROJECT}.service
-}
-
-function start() {
+    systemctl daemon-reload
     systemctl start ${GITHUB_PROJECT}.service
 }
 
@@ -113,6 +111,5 @@ fetch
 install python3
 install systemd
 push
-stop
-start
+reload
 # TODO restart nginx?
