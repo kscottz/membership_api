@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -v
+set -e
 
 USER="$1"
 if [ -z ${USER} ]; then
@@ -22,6 +24,7 @@ function fetch() {
     wget https://github.com/${USER}/${PROJECT}/archive/${BRANCH}.tar.gz -O /tmp/${ZIP_FILENAME}
     cd /tmp
     tar -xvf /tmp/${ZIP_FILENAME}
+    rm -r /opt/deploy/stage/${ARTIFACT_ID}
     mv /tmp/${PROJECT}-${BRANCH} /opt/deploy/stage/${ARTIFACT_ID}
 }
 
