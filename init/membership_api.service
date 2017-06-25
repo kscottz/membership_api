@@ -1,0 +1,8 @@
+[Unit]
+Description=uWSGI instance to serve membership_api
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/membership_api
+Environment="PATH=/opt/membership_api/venv/bin"
+ExecStart=/bin/bash -c 'source venv/bin/activate; uwsgi --ini init/uwsgi.ini --logto2 /opt/membership_api/uwsgi.log --uid 1001 --gid 1001'
