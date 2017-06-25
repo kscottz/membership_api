@@ -4,7 +4,7 @@ set -e
 
 while [ $# -gt 0 ]
 do
-    echo "$1 $2"
+    echo "\$1=$1 \$2=$2"
     case $1 in
         -u)
             GITHUB_USER=$2
@@ -16,6 +16,7 @@ do
             GITHUB_BRANCH="$2"
             ;;
     esac
+    shift
     shift
 done
 
