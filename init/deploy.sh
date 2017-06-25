@@ -3,6 +3,7 @@
 USER="$1"
 PROJECT="$2"
 BRANCH="$3"
+ARTIFACT_ID="${USER}-${PROJECT}-${BRANCH}"
 
 if [ -z ${USER} ]; then
     USER=DSASanFrancisco
@@ -17,20 +18,20 @@ if [ -z ${BRANCH} ]; then
 fi
 
 function fetch() {
-    ARTIFACT_NAME="${USER}-${PROJECT}-${BRANCH}"
-    ZIP_FILENAME="$ARTIFACT_NAME.tar.gz"
+    ZIP_FILENAME="$ARTIFACT_ID.tar.gz"
     wget https://github.com/${USER}/${PROJECT}/archive/${BRANCH}.tar.gz -O /tmp/${ZIP_FILENAME}
     cd /tmp
     tar -xvf /tmp/${ZIP_FILENAME}
-    mv /tmp/${PROJECT}-${BRANCH} /opt/deploy/stage/${ARTIFACT_NAME}
+    mv /tmp/${PROJECT}-${BRANCH} /opt/deploy/stage/${ARTIFACT_ID}
 }
 
 function restart() {
-    systemctl stop membership_api.service
+    systemctl stop ${PROJECT}.service
     fetch
-    source /opt/deploy/venv/membership_api/bin/activate
-    pip install -r /opt/deploy/membership_api/requirements.txt
-    systemctl start membership_api.service
+    # TODO: figure out how to standardize this
+    source /opt/deploy/venv/${PROJECT}/bin/activate
+    pip install -r /opt/deploy/${ARTIFACT_ID}/requirements.txt
+    systemctl start ${PROJECT}.service
     # TODO restart nginx?
 }
 
