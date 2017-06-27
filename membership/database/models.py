@@ -120,3 +120,24 @@ class EligibleVoter(Base):
 
     member = relationship(Member, backref='eligible_votes')
     election = relationship(Election, backref='voters')
+
+
+class Email(Base):
+    __tablename__ = 'emails'
+
+    id = Column(Integer, primary_key=True, unique=True)
+    external_id = Column(String(254), unique=True)
+    email_address = Column(String(254), unique=True, nullable=False)
+    committee_id = Column(ForeignKey('committees.id'))
+
+    committee = relationship(Committee, backref='emails')
+
+
+class ForwardingAddress(Base):
+    __tablename__ = 'forwarding_addresses'
+
+    id = Column(Integer, primary_key=True, unique=True)
+    forward_to = Column(String(254))
+    incoming_email_id = Column(ForeignKey('emails.id'))
+
+    incoming_email = relationship(Email, backref='forwarding_addresses')
