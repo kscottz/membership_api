@@ -1,11 +1,13 @@
-from config.database_config import settings
-from datetime import datetime
 import json
+from datetime import datetime
+
+import sqlalchemy.types as types
 from sqlalchemy import create_engine, event
 from sqlalchemy.exc import DisconnectionError
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-import sqlalchemy.types as types
+from sqlalchemy.orm import sessionmaker
+
+from config.database_config import settings
 
 
 def checkout_listener(dbapi_con, con_record, con_proxy):

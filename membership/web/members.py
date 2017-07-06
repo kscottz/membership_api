@@ -26,7 +26,7 @@ def get_member(requester: Member, session: Session):
     return jsonify(member)
 
 
-def get_member_basics(member):
+def get_member_basics(member: Member):
     return {'id': member.id,
             'info': {'first_name': member.first_name, 'last_name': member.last_name, 'biography': member.biography},
             'roles':
@@ -35,7 +35,7 @@ def get_member_basics(member):
              }
 
 
-def get_member_details_helper(member):
+def get_member_details_helper(member: Member):
     member_dict = get_member_basics(member)
     member_dict['meetings'] = [attendee.meeting.name for attendee in member.meetings_attended]
     member_dict['votes'] = [{'election_id': eligible_vote.election_id,
