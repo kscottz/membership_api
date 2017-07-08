@@ -1,52 +1,52 @@
-from decimal import Decimal, getcontext
 import random
-from typing import Any, List, Set
+from decimal import Decimal, getcontext
+from typing import Dict, Generic, List, Set, TypeVar
 
 ZERO = Decimal('0.00000')
 ONE = Decimal('1.00000')
 
+T = TypeVar('T')
 
-class Vote:
-    def __init__(self, choices: List[Any]) -> None:
-        self.weight = ONE
-        self.choice_stack = list(reversed(choices))
 
-    def transfer(self, transfer_weight: Decimal, remaining_candidates: Set[Any]):
+class Vote(Generic[T]):
+    def __init__(self, choices: List[T]):
+        self.weight: Decimal = ONE
+        self.choice_stack: List[T] = list(reversed(choices))
+
+    def transfer(self, transfer_weight: Decimal, remaining_candidates: Set[T]) -> None:
         self.weight *= transfer_weight
         self.choice_stack.pop()
         while self.choice_stack and self.choice_stack[-1] not in remaining_candidates:
             self.choice_stack.pop()
 
 
-class CandidateVotes:
-    def __init__(self, candidate):
-        self.candidate = candidate
-        self.total = ZERO
-        self.transfer_total = ZERO
-        self.votes = []
+class CandidateVotes(Generic[T]):
+    def __init__(self, candidate: T):
+        self.candidate: T = candidate
+        self.total: Decimal = ZERO
+        self.transfer_total: Decimal = ZERO
+        self.votes: List[Vote[T]] = []
 
 
-class STVElection:
-    def __init__(self, candidates, num_winners, choices_list: List[List[Any]]):
-        self.votes = [Vote(choices) for choices in choices_list]
-        self.winners = []
-        self.remaining_candidates = set(candidates)
-        self.num_winners = num_winners
-        self.previous_rounds = []
+class STVElection(Generic[T]):
+    def __init__(self, candidates: List[T], num_winners: int, choices_list: List[List[T]]):
+        self.votes: List[Vote[T]] = [Vote(choices) for choices in choices_list]
+        self.winners: List[T] = []
+        self.remaining_candidates: Set[T] = set(candidates)
+        self.num_winners: int = num_winners
+        self.previous_rounds: List[Dict[CandidateVotes[T], dict]] = []
 
         self.quota = int(len(self.votes) / (self.num_winners + 1)) + 1
         getcontext().prec = 5
 
-    def hold_election(self):
+    def hold_election(self) -> List[T]:
         while len(self.winners) < self.num_winners and len(self.remaining_candidates) > 0:
             self.count_votes()
         return self.winners
 
-    def count_votes(self):
-        candidate_votes = {}  # type: Dict[Any, CandidateVote]
-        for candidate in self.remaining_candidates:
-            candidate_votes[candidate] = CandidateVotes(candidate)
-        for vote in self.votes:
+    def count_votes(self) -> None:
+        candidate_votes: Dict[T, CandidateVotes[T]] = {candidate: CandidateVotes(candidate) for candidate in self.remaining_candidates}
+        for vote in self.votes:  # type: Vote[T]
             if len(vote.choice_stack) > 0 and vote.weight > ZERO:
                 cv = candidate_votes[vote.choice_stack[-1]]
                 cv.total += vote.weight
@@ -55,13 +55,15 @@ class STVElection:
                     cv.transfer_total += vote.weight
                 cv.votes.append(vote)
         self.previous_rounds.append(
-            {cv.candidate: {'total_votes': cv.total, 'total_transfer_votes': cv.transfer_total} for cv in
-             candidate_votes.values()})
+            {
+                cv.candidate: {'total_votes': cv.total, 'total_transfer_votes': cv.transfer_total}
+                for cv in candidate_votes.values()
+            }
+        )
 
         result = list(candidate_votes.values())
         result.sort(key=lambda x: x.total, reverse=True)
-        if result[0].total >= self.quota or \
-                        len(self.remaining_candidates) <= self.num_winners - len(self.winners):
+        if result[0].total >= self.quota or len(self.remaining_candidates) <= self.num_winners - len(self.winners):
             i = 0
             round_winners = []
             while i < len(result) and result[i].total == result[0].total:
@@ -87,7 +89,7 @@ class STVElection:
             for vote in loser.votes:
                 vote.transfer(ONE, self.remaining_candidates)
 
-    def break_tie(self, round_winners: List[CandidateVotes], voting_round: int, win: bool):
+    def break_tie(self, round_winners: List[CandidateVotes[T]], voting_round: int, win: bool) -> CandidateVotes[T]:
         multiplier = 1 if win else -1
         if len(round_winners) == 1:
             return round_winners[0]
