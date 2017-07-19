@@ -148,7 +148,7 @@ def attend_meeting_from_kiosk(requester: Member, session: Session, meeting_id: i
         session.commit()
     else:
         if len(session.query(Attendee).filter_by(meeting_id=meeting.id,
-                                                 member_id=requester.id).all()) > 0:
+                                                 member_id=member.id).all()) > 0:
             return BadRequest('You have already logged into this meeting')
     a = Attendee()
     a.meeting = meeting
