@@ -97,7 +97,7 @@ def add_committee(requester: Member, session: Session):
 
 @member_api.route('/meeting/list', methods=['GET'])
 @requires_auth(admin=False)
-def get_meeting(requester: Member, session: Session):
+def get_meetings(requester: Member, session: Session):
     meetings = session.query(Meeting).all()
     result = {m.id: m.name for m in meetings}
     return jsonify(result)
@@ -116,6 +116,43 @@ def attend_meeting(requester: Member, session: Session):
     a = Attendee()
     a.meeting = meeting
     a.member = requester
+    session.add(a)
+    session.commit()
+    return jsonify({'status': 'success'})
+
+
+@member_api.route('/meetings/<meeting_id>', methods=['GET'])
+@requires_auth(admin=False)
+def get_meeting(requester: Member, session: Session, meeting_id: int):
+    meeting = session.query(Meeting).filter_by(id=meeting_id).one_or_none()
+    if not meeting:
+        return BadRequest('Invalid meeting id')
+    return jsonify({'id': meeting_id, 'name': meeting.name})
+
+
+@member_api.route('/meetings/<meeting_id>/attendee', methods=['POST'])
+@requires_auth(admin=False)
+def attend_meeting_from_kiosk(requester: Member, session: Session, meeting_id: int):
+    meeting = session.query(Meeting).filter_by(id=meeting_id).one_or_none()
+    if not meeting:
+        return BadRequest('Invalid meeting id')
+    email_address = request.json['email_address']
+    if not email_address:
+        return BadRequest('You must supply an email address to check in')
+    member = session.query(Member).filter_by(email_address=email_address).one_or_none()
+    if not member:
+        member = Member()
+        member.first_name = request.json['first_name']
+        member.last_name = request.json['last_name']
+        member.email_address = email_address
+        session.commit()
+    else:
+        if len(session.query(Attendee).filter_by(meeting_id=meeting.id,
+                                                 member_id=requester.id).all()) > 0:
+            return BadRequest('You have already logged into this meeting')
+    a = Attendee()
+    a.meeting = meeting
+    a.member = member
     session.add(a)
     session.commit()
     return jsonify({'status': 'success'})
