@@ -1,0 +1,43 @@
+version: '3'
+services:
+  # The REST / GraphQL API
+  api:
+    image: dsasf/membership/api
+    # All environment variables should go in these files
+    # The order is significant and .env must override all others
+    env_file:
+      - docker.env
+      - .env
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    links:
+      - db:mysql
+    ports:
+      - 8080:8080
+  # The SQL database
+  db:
+    image: mariadb:latest
+    # All environment variables should go in these files
+    # The order is significant and .env must override all others
+    env_file:
+      - docker.env
+      - .env
+    ports:
+      - 3306:3306
+    volumes:
+      - ./mnt/db:/var/lib/mysql
+  # Database migrations
+  migrate:
+    image: dsasf/membership/migrate
+    # All environment variables should go in these files
+    # The order is significant and .env must override all others
+    env_file:
+      - docker.env
+      - .env
+    build:
+      context: .
+      dockerfile: docker/migrate/Dockerfile
+    command: ["./wait-for", "db:3306", "-t", "120", "--", "alembic", "upgrade", "head"]
+    links:
+      - db:mysql
