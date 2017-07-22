@@ -3,10 +3,36 @@
 This is the backend for the membership portal.
 
 It uses Auth0 for authentication / authorization and MailGun for sending email.
-**NOTE: Currently, there is a bug when developing locally with these services disabled.**
-We are working on a fix so that you can set a flag to disable Auth0 and not need to be authenticated
-to use the site.
- 
+However these features are disabled by default for local development.
+
+# Common Installation
+
+We use Docker to run and develop the API. Whether you are running the API locally for
+developing the UI, or you are making changes to the API, I suggest you use Docker.
+
+1. **[Install docker-compose](https://docs.docker.com/compose/install/)**
+2. **Create your `.env` config file for the project**
+    ```
+    cp example.env .env
+    # edit .env and replace the email with your email address
+    ```
+
+# Run with Docker
+
+If you don't need to make code changes to the API, the easiest way to get started is to
+just use docker compose to run the services. We created a dead-simple command for this:
+
+```
+make
+```
+
+# Debug with Docker
+
+If you need to make changes to the API, you will need to install the API locally
+and use the `make dev` command instead of `make`. This will start the database,
+run any necessary migrations, and then start the app in debug mode so that it
+will pickup live updates when you save any changes.
+
 # Installation for Mac OS X
 
 1. **Download and install dependencies**
@@ -14,18 +40,8 @@ to use the site.
     brew update
     brew install mysql pyenv
     ```
-    
-2. **Create the dsa mysql database**
-    1. Start mysql server
-    ```
-    mysql.server start
-    ```
-    2. Create the `dsa` database
-    ```
-    mysql -u root -e "create database dsa"
-    ```
 
-3. **Download and install python**
+2. **Download and install python**
     1. Use pyenv to install python 3.6.1
     ```
     pyenv install 3.6.1
@@ -47,20 +63,20 @@ to use the site.
     # Should be $HOME/.pyenv/shims/python
     ```
 
-4. **Create a virtual environment (venv) for this project** (read more about [python 3 venv](https://packaging.python.org/installing/#creating-virtual-environments))
+3. **Create a virtual environment (venv) for this project** (read more about [python 3 venv](https://packaging.python.org/installing/#creating-virtual-environments))
     ```
     # from inside the repo
     python -m venv .
     ```
 
-5. **Activate the venv**
+4. **Activate the venv**
     ```
     # from inside the repo
     source bin/activate
     ```
     You should now see `(membership_api)` to the left of your prompt in the terminal
 
-6. **Install the python dependencies**
+5. **Install the python dependencies**
     1. Verify that you are using the correct `pip`
     ```
     which pip
@@ -71,23 +87,12 @@ to use the site.
     pip install -r requirements-dev.txt
     ```
 
-7. **Create your `.env` config file for the project**
+6. **Run the server in debug mode**
     ```
-    cp example.env .env
-    # edit .env and replace the email with your email address
-    ```
-
-8. **Run the database migrations**
-    ```
-    alembic upgrade head
+    make dev
     ```
 
-9. **Run the server**
-    ```
-    make run
-    ```
-
-10. Verify that your API is up
+7. Verify that your API is up
     ```
     curl http://localhost:8080/health
     # Should see {"health": true}
@@ -99,16 +104,7 @@ Congrats! You did it!
 
 Help! I'm seeing some error. What do I do?
 
-1. **Error** Can't run `alembic upgrade` or start the Flask server.
-```
-... can't connect to the mysql socket `/tmp/mysql.sock` ...
-```
-**Fix**
-```
-mysql.server start
-```
-
-2. **Error** Can't install Python 3.6.1, I'm seeing `zlib not available`
+1. **Error** Can't install Python 3.6.1 on Mac OSX, I'm seeing `zlib not available`
 **Fix**
 Download and install or upgrade XCode, and install the command line tools.
 ```
