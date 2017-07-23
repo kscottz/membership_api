@@ -43,7 +43,7 @@ class Member(Base):
         return n
 
     @property
-    def committess(self) -> List['Committee']:
+    def committees(self) -> List['Committee']:
         return [role.committee for role in self.roles]
 
     def has_committee_role(self, committee: Optional[Union[Committee, int]], role: str):

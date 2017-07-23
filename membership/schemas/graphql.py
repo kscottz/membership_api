@@ -11,9 +11,9 @@ from membership.database import models
 from membership.database.models import *
 
 
-def extract_fields(model: models.Base):
-    cols = model.__table__.columns
-    return {k: getattr(model, k) for k in vars(model) if not k.startswith('_')}
+# def extract_fields(model: models.Base):
+#     cols = model.__table__.columns
+#     return {k: getattr(model, k) for k in vars(model) if not k.startswith('_')}
 
 
 # Full database models
@@ -145,7 +145,7 @@ class PubCommitteeSchema(g.ObjectType, EntityFields):
     name = g.String()
 
     def __init__(self, model: models.Committee):
-        fields = extract_fields(model)
+        # fields = extract_fields(model)
         all_kwargs = {
             'name': model.name
         }
@@ -217,7 +217,7 @@ class MyUserSchema(g.ObjectType, EntityFields):
             'id': member.id,
             'first_name': member.first_name,
             'last_name': member.last_name,
-            'name': member.first_name + ' ' + member.last_name,
+            'name': member.name,
             'email_address': member.email_address,
             'biography': member.biography,
         }
@@ -240,9 +240,9 @@ class QuerySchema(g.ObjectType):
     all_attendees = g.List(AttendeeSchema)
     all_candidates = g.List(CandidateSchema)
     all_committees = g.List(CommitteeSchema)
-    all_elections = g.List(ElectionSchema)
-    all_eligible_voters = g.List(EligibleVoterSchema)
-    all_meetings = g.List(MeetingSchema)
+    all_elections = g.List(ElectionSchema, id=g.Argument(ID))
+    all_eligible_voters = g.List(EligibleVoterSchema, member_id=g.Argument(ID))
+    all_meetings = g.List(MeetingSchema, id=g.Argument(ID))
     all_members = g.List(MemberSchema, id=g.Argument(ID))
     all_rankings = g.List(RankingSchema)
     all_roles = g.List(RoleSchema)
@@ -273,21 +273,19 @@ class QuerySchema(g.ObjectType):
         return query.all()
 
     def resolve_all_meetings(self, args: dict, context: dict, info: ResolveInfo):
-        id = args['id']
         query: Query = MeetingSchema.get_query(context)
-        results = query.filter(Meeting.id == id) if id else query.all()
-        return results
+        return query.all()
 
     def resolve_all_members(self, args: dict, context: dict, info: ResolveInfo):
         requester: Member = context['requester']
-        filter_id = args['id']
+        query: Query = MemberSchema.get_query(context)
+        filter_id = args.get('id')
         if requester.is_admin():
-            query: Query = MemberSchema.get_query(context)
-            filtered = query.all() if not filter_id else query.filter(Member.id == filter_id)
+            query = query.filter(Member.id == filter_id)
+            return query.all()
         else:
-            filtered = [requester] if not filter_id else \
+            return [requester] if not filter_id else \
                 requester if requester.id == filter_id else []
-        return filtered
 
     def resolve_public_elections(self, args: dict, context: dict, info: ResolveInfo):
         query: Query = ElectionSchema.get_query(context)
