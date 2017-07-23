@@ -11,6 +11,11 @@ from membership.database import models
 from membership.database.models import *
 
 
+def extract_fields(model: models.Base):
+    cols = model.__table__.columns
+    return {k: getattr(model, k) for k in vars(model) if not k.startswith('_')}
+
+
 # Full database models
 
 class MemberSchema(SQLAlchemyObjectType):
@@ -139,6 +144,13 @@ class PubRankingSchema(g.ObjectType, EntityFields):
 class PubCommitteeSchema(g.ObjectType, EntityFields):
     name = g.String()
 
+    def __init__(self, model: models.Committee):
+        fields = extract_fields(model)
+        all_kwargs = {
+            'name': model.name
+        }
+        super().__init__(**all_kwargs)
+
 
 class PubMeetingSchema(g.ObjectType, EntityFields):
     short_id = ID()
@@ -148,6 +160,9 @@ class PubMeetingSchema(g.ObjectType, EntityFields):
     end_time = DateTime()
 
     attendees = g.List(_reltype('PubAttendeeSchema'))
+
+    def __init__(self, model: models.Meeting):
+        super().__init__(model)
 
 
 class PubAttendeeSchema(g.ObjectType, EntityFields):
@@ -170,16 +185,55 @@ class MyRole(g.ObjectType, EntityFields):
 
     committee = g.Field(_reltype('PubCommitteeSchema'))
 
+    def __init__(self, model: models.Role):
+        self._model = model
+        all_kwargs = {
+            'id': model.id,
+            'name': model.role,
+        }
+        super().__init__(**all_kwargs)
+
+    def resolve_committee(self, args: dict, context: dict, info: ResolveInfo):
+        return None \
+            if self._model.committee is None \
+            else PubCommitteeSchema(self._model.committee)
+
 
 class MyUserSchema(g.ObjectType, EntityFields):
     first_name = g.String()
     last_name = g.String()
+    name = g.String()
     email_address = g.String()
     biography = g.String()
 
+    committees = g.List(_reltype('PubCommitteeSchema'))
     eligible_votes = g.List(_reltype('MyEligibleVoterSchema'))
     meetings_attended = g.List(_reltype('PubMeetingSchema'))
     roles = g.List(_reltype('MyRole'))
+
+    def __init__(self, member: models.Member):
+        self._model = member
+        all_kwargs = {
+            'id': member.id,
+            'first_name': member.first_name,
+            'last_name': member.last_name,
+            'name': member.first_name + ' ' + member.last_name,
+            'email_address': member.email_address,
+            'biography': member.biography,
+        }
+        super().__init__(**all_kwargs)
+
+    def resolve_committees(self, args: dict, context: dict, info: ResolveInfo):
+        return map(lambda x: PubCommitteeSchema(x), self._model.committees)
+
+    def resolve_eligible_votes(self, args: dict, context: dict, info: ResolveInfo):
+        return map(lambda x: MyEligibleVoterSchema(x), self._model.eligible_votes)
+
+    def resolve_meetings_attended(self, args: dict, context: dict, info: ResolveInfo):
+        return map(lambda x: PubMeetingSchema(x), self._model.meetings_attended)
+
+    def resolve_roles(self, args: dict, context: dict, info: ResolveInfo):
+        return map(lambda x: MyRole(x), self._model.roles)
 
 
 class QuerySchema(g.ObjectType):
@@ -254,7 +308,7 @@ class QuerySchema(g.ObjectType):
 
     def resolve_my_user(self, args: dict, context: dict, info: ResolveInfo):
         requester: Member = context['requester']
-        return requester
+        return MyUserSchema(requester)
 
 
 def filters_for(model: Base, args: Dict[str, Any]):

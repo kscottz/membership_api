@@ -16,7 +16,6 @@ election_api = Blueprint('election_api', __name__)
 @requires_auth(admin=False)
 def get_elections(requester: Member, session: Session):
     elections = session.query(Election).all()
-    elections = session.query(Election).all()
     result = {e.id: e.name for e in elections}
     return jsonify(result)
 
@@ -24,7 +23,7 @@ def get_elections(requester: Member, session: Session):
 @election_api.route('/election', methods=['GET'])
 @requires_auth(admin=False)
 def get_election_by_id(requester: Member, session: Session):
-    election = session.query(Election).get(request.args.get('id'))
+    election: Election = session.query(Election).get(request.args.get('id'))
     result = {'name': election.name,
               'number_winners': election.number_winners,
               'candidates': [{'id': candidate.id,
@@ -142,6 +141,13 @@ def submit_paper_vote(requester: Member, session: Session):
 @election_api.route('/vote', methods=['POST'])
 @requires_auth()
 def submit_vote(requester: Member, session: Session):
+    """
+    body:
+    {
+        "election_id": int,
+        "rankings": List[int]
+    }
+    """
     election_id = request.json['election_id']
     election = session.query(Election).get(election_id)
     if election.status == 'final' or election.status == 'polls closed':

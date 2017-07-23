@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import cast, Any, List, Optional, Union
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
@@ -40,6 +41,10 @@ class Member(Base):
         if self.last_name:
             n += ' ' + self.last_name
         return n
+
+    @property
+    def committess(self) -> List['Committee']:
+        return [role.committee for role in self.roles]
 
     def has_committee_role(self, committee: Optional[Union[Committee, int]], role: str):
         committee_id = committee.id if isinstance(committee, Committee) else committee
@@ -96,6 +101,13 @@ class Election(Base):
     candidates: List['Candidate'] = relationship('Candidate', back_populates='election')
     votes: List['Vote'] = relationship('Vote', back_populates='election')
     voters: List['EligibleVoter'] = relationship('EligibleVoter', back_populates='election')
+
+
+class ElectionStatus(Enum):
+    draft = 'draft'
+    in_progress = 'in progress'
+    polls_closed = 'polls closed'
+    final = 'final'
 
 
 class Candidate(Base):
