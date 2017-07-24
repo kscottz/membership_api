@@ -3,6 +3,8 @@ from graphene_sqlalchemy import SQLAlchemyObjectType
 from membership.database.models import *
 from .util import *
 
+resolver = SchemaResolver()
+
 
 # Full database models
 
@@ -11,7 +13,7 @@ class MemberSchema(SQLAlchemyObjectType):
         model = Member
 
     name = g.String()
-    resolve_name = Schema.resolver('name')
+    resolve_name = resolver.field(name)  # TODO Allow extending from a Schema type that supports SQLAlchemy
 
 
 class CommitteeSchema(SQLAlchemyObjectType):

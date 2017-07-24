@@ -20,6 +20,7 @@ class ID(g.Scalar):
             return int(ast.value)
 
 
+# TODO: Require specifying the types of wrapped classes supported and validate that they are compatible
 class EntitySchema(Schema):
     """
     The root of every identifiable entity in the system.
