@@ -66,7 +66,7 @@ will pickup live updates when you save any changes.
 3. **Create a virtual environment (venv) for this project** (read more about [python 3 venv](https://packaging.python.org/installing/#creating-virtual-environments))
     ```
     # from inside the repo
-    python -m venv .
+    python -m venv . --copies
     ```
 
 4. **Activate the venv**
