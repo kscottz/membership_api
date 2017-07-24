@@ -125,30 +125,6 @@ class SchemaResolver(Callable[[Union[Callable, str]], ResolverCallable]):
         ...     def resolve_c(self, env: ResolveEnv):
         ...         return env.context.get('c')
         """
-        # if isinstance(f, str):
-        #     def wrapped_resolve(self: Schema, args: dict, context: dict, info: ResolveInfo) -> Any:
-        #         field = self._meta.fields[f]
-        #         field_type = field.type
-        #         # If this field is a scalar, then we don't need to look at the field.type, just return the field value
-        #         if isinstance(field_type, ScalarTypeMeta):
-        #             return getattr(self, f, getattr(self._model, f, None))
-        #         elif isinstance(field_type, g.List):
-        #             # This is a field containing a list, map each element of the list to the expected schema type
-        #             cls = field_type.of_type
-        #             return [cls(x) for x in getattr(self._model, f)]
-        #         elif isinstance(field_type, g.NonNull):
-        #             # This is a field containing a schema, map field value to the expected schema type
-        #             cls = field_type.of_type
-        #             value = getattr(self, f, getattr(self._model, f, None))
-        #             if value is None:
-        #                 raise ValueError('Value of non-null field {}.{} cannot be None'.format(type(self), f))
-        #             return value if isinstance(cls, ScalarTypeMeta) else cls(value)
-        #         # TODO: Handle List(NonNull), NonNull(List), List(Scalar) with recursion
-        #         else:
-        #             cls = field_type
-        #             optional_value = getattr(self._model, f)
-        #             return optionally(cls, optional_value)
-        # elif callable(f):
         def wrapped_resolve(schema: Schema, args: dict, context: dict, info: ResolveInfo) -> Any:
             sig = signature(f)
             num_args = len(sig.parameters)
@@ -161,9 +137,6 @@ class SchemaResolver(Callable[[Union[Callable, str]], ResolverCallable]):
                 return f(schema, env)
 
         return wrapped_resolve
-        # else:
-        #     raise ValueError('Expected decorated resolver function or str field name, not {}'.format(type(f)))
-        # return wrapped_resolve
 
 
 class SchemaMeta(ObjectTypeMeta):
