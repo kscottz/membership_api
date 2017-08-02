@@ -17,9 +17,11 @@ ADD requirements.txt ./
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-ADD config ./config
-ADD membership ./membership
-ADD flask_app.py ./
+ADD config /src/config
+ADD membership /src/membership
+ADD flask_app.py /src
+
+WORKDIR /src
 
 EXPOSE 8080
 
