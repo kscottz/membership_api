@@ -15,8 +15,6 @@ services:
       - db:mysql
     ports:
       - 8080:8080
-    volumes:
-      - '.:/src'
   # The SQL database
   db:
     image: mariadb:latest

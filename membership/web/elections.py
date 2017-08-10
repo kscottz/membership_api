@@ -37,7 +37,7 @@ def get_election_by_id(requester: Member, session: Session):
 def add_election(requester: Member, session: Session):
     election = Election(name=request.json['name'])
     session.add(election)
-    candidates = request.json['candidate_list'].split(',')
+    candidates = request.json['candidate_list']
     members = session.query(Member).filter(Member.email_address.in_(candidates)).all()
     for member in members:
         candidate = Candidate()
